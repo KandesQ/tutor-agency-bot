@@ -30,8 +30,8 @@ def upgrade() -> None:
         sa.Column("lesson_number", sa.Integer, nullable=False),
         sa.Column("price", sa.Numeric(10, 2), nullable=False),
         sa.Column("payment_status", sa.Enum(PaymentStatus), nullable=False),
-        sa.Column("tutor_chat_id", sa.BigInteger, nullable=False),
-        sa.ForeignKeyConstraint(("tutor_chat_id",), ["tutors.chat_id"])
+        sa.Column("tutor_account_id", sa.BigInteger, nullable=False),
+        sa.ForeignKeyConstraint(("tutor_account_id",), ["tutors.account_id"])
     )
 
 
