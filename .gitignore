@@ -1,4 +1,7 @@
 .venv
 .idea
+pgdata
+**/__pycache__/
 .pgdata
 .env
+redisdata

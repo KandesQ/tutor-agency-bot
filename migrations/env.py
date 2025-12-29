@@ -16,8 +16,9 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
 
-missing_vars = [v for v in ["DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT"] if not os.getenv(v)]
+missing_vars = [v for v in ["DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT", "DB_NAME"] if not os.getenv(v)]
 if missing_vars:
     raise RuntimeError(f"Не указаны требуемые переменные окружения: {', '.join(missing_vars)}")
 
@@ -28,7 +29,7 @@ config = context.config
 
 config.set_main_option(
     "sqlalchemy.url",
-    f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/tutor_agency_bot"
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
 
