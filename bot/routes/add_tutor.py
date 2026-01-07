@@ -1,7 +1,3 @@
-import os
-import time
-
-import jwt
 from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -19,10 +15,6 @@ add_tutor_router = Router()
 
 @add_tutor_router.message(Command("add_tutor"), HeadManager())
 async def add_tutor(msg: Message):
-    """
-    Возвращает одноразовый токен для регистрации
-    нового репетитора. Токен действует в течении 10 мин
-    """
     code = create_one_time_code()
 
     md2_code = Text(code).as_markdown()

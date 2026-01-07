@@ -28,6 +28,8 @@ def upgrade() -> None:
         sa.Column("student_fathers_name", sa.String(100), nullable=True),
         sa.Column("subject", sa.String(100), nullable=False),
         sa.Column("lesson_number", sa.Integer, nullable=False),
+        sa.Column("lesson_date", sa.DateTime(timezone=False), nullable=False),
+        sa.Column("payment_date", sa.DateTime(timezone=False), nullable=True),
         sa.Column("price", sa.Numeric(10, 2), nullable=False),
         sa.Column("payment_status", sa.Enum(PaymentStatus), nullable=False),
         sa.Column("tutor_account_id", sa.BigInteger, nullable=False),

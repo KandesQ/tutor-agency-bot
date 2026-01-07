@@ -7,7 +7,7 @@ from .Base import Base
 class Tutor(Base):
     __tablename__ = "tutors"
 
-    account_id = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    account_id = mapped_column(BigInteger, primary_key=True)
     surname = mapped_column(String(100), nullable=False)
     name = mapped_column(String(100), nullable=False)
     fathers_name = mapped_column(String(100), nullable=True)
