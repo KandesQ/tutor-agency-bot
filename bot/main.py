@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from bot.routes.add_tutor import add_tutor_router
 from bot.routes.last_month_income import last_month_income_router
 from bot.routes.register import register_tutor_router
+from bot.routes.report import report_router
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ logging.basicConfig(
 dp = Dispatcher()
 
 dp.include_router(add_tutor_router)
+dp.include_router(report_router)
 dp.include_router(register_tutor_router)
 dp.include_router(last_month_income_router)
 

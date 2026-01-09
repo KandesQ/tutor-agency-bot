@@ -29,7 +29,7 @@ async def user_is_authenticated(user_account_id: int, db_session: AsyncSession) 
 
     res = await db_session.execute(statement)
 
-    return bool(res.scalar())
+    return bool(res.scalar()) or user_is_head_manager(user_account_id)
 
 
 def code_is_valid(code: str) -> bool:

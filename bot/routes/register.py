@@ -12,7 +12,7 @@ from aiogram.utils.formatting import Text
 from ..dependencies import redis_async_client, async_session_local
 from ..usecases.check_authentication import code_is_valid, code_already_used, user_is_authenticated
 from ..usecases.register_tutor import register_tutor
-from ..usecases.validation.registration_data import valid_fullname, valid_birth_date
+from ..usecases.validation.user_input import valid_fullname, valid_birth_date
 
 register_tutor_router = Router()
 
@@ -28,7 +28,6 @@ class Form(StatesGroup):
     one_time_code = State()
 
 
-# TODO: сделать нынешний register модуль пакетом, и на каждый этап создать свой модуль?
 
 @register_tutor_router.message(Command("register"))
 async def register(msg: Message, state: FSMContext):
@@ -252,7 +251,6 @@ async def process_confirmed_data_callback(callback: CallbackQuery, state: FSMCon
     await callback.answer()
 
 
-# TODO: нужно чтобы нажатия на любую кнопку это сообщение пропадало
 async def _confirm_data(fullname: str, birth_date: str, msg: Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Изменить ФИО ✏️", callback_data="edit_fullname")],
