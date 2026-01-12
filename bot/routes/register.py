@@ -47,10 +47,9 @@ async def register(msg: Message, state: FSMContext):
 async def process_one_time_code(msg: Message, state: FSMContext):
     one_time_code = msg.text.strip()
 
-    # TODO: если пользователь вводит не регистрационный код - выполняется это условие. Перед этим кодом нужно
-    #  добавить проверку, что сообщение является регистрационным кодом
-    if not code_is_valid(one_time_code):
-        await msg.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await msg.answer(error_message_opt)
         await state.set_state(None)
         return
 

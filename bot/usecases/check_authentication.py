@@ -1,5 +1,7 @@
 import logging
 import os
+from typing import Optional
+
 import jwt
 from redis import Redis
 
@@ -32,20 +34,18 @@ async def user_is_authenticated(user_account_id: int, db_session: AsyncSession) 
     return bool(res.scalar()) or user_is_head_manager(user_account_id)
 
 
-def code_is_valid(code: str) -> bool:
+def code_is_valid(code: str) -> Optional[str]:
     try:
         jwt.decode(code, os.getenv("JWT_SECRET"), algorithms=["HS256"])
-        return True
+        return None
     except jwt.ExpiredSignatureError:
-        logger.info("Время активации регистрационного токена истекло")
+        return "Время регистрации истекло. Запросите новый код и запустите регистрацию сначала"
 
     except jwt.InvalidSignatureError:
-        logger.info("Подпись регистрационного токена не валидна")
+        logger.warning("Подпись регистрационного токена не валидна")
 
     except jwt.PyJWTError:
-        logger.info("Сообщение не является регистрационным токеном")
-
-    return False
+        return "Сообщение не является регистрационным токеном"
 
 
 async def code_already_used(code: str, redis_client: Redis) -> bool:
