@@ -1,4 +1,5 @@
 import os
+from ftplib import error_reply
 
 import jwt
 from aiogram import Router, F
@@ -11,6 +12,7 @@ from aiogram.utils.formatting import Text
 
 from ..dependencies import redis_async_client, async_session_local
 from ..usecases.check_authentication import code_is_valid, code_already_used, user_is_authenticated
+from ..usecases.consent_personal_data_agreement import consent_personal_data_agreement
 from ..usecases.register_tutor import register_tutor
 from ..usecases.validation.user_input import valid_fullname, valid_birth_date
 
@@ -50,20 +52,63 @@ async def process_one_time_code(msg: Message, state: FSMContext):
     error_message_opt = code_is_valid(one_time_code)
     if error_message_opt is not None:
         await msg.answer(error_message_opt)
-        await state.set_state(None)
         return
 
     if await code_already_used(one_time_code, redis_async_client):
         return
 
+    await state.update_data(one_time_code=one_time_code)
     await msg.answer("Код успешно активирован")
 
-    # TODO: Добавить согласие на обработку персональных данных (др). Отдельной фичей/коммитом
-
-    await state.update_data(one_time_code=one_time_code)
-    await state.set_state(Form.fullname)
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Принять", callback_data="agree_consent")],
+        [InlineKeyboardButton(text="Отказаться", callback_data="disagree_consent")]
+    ])
 
     await msg.answer((
+        "*Согласие на обработку персональных данных*\n\n"
+        "*Мы храним:*\n"
+        "• Telegram ID\n"
+        "• ФИО\n"
+        "• дату рождения\n\n"
+        "Данные используются только для работы сервиса и не передаются третьим лицам\\.\n\n"
+        "_Версия договора от 12\\.01\\.2026_"
+    ),
+        reply_markup=kb,
+        parse_mode=ParseMode.MARKDOWN_V2
+    )
+
+
+@register_tutor_router.callback_query(F.data == "disagree_consent")
+async def process_disagree_consent(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+
+    await callback.message.answer((
+        "Для работы бота необходимо ваше согласие на обработку персональных данных."
+        " Пройдите повторную регистрацию, если будете готовы принять соглашение"
+    ))
+
+    await state.clear()
+
+
+@register_tutor_router.callback_query(F.data == "agree_consent")
+async def process_agree_consent(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+
+    user_account_id = callback.message.from_user.id
+    async with async_session_local() as session:
+        error = await consent_personal_data_agreement(user_account_id, session)
+
+        if error:
+            await callback.message.answer((
+                "Возникла непредвиденная ошибка при соглашении на обработку персональных данных\n\n"
+                "Свяжитесь с разработчиком"
+            ))
+            return
+
+    await state.set_state(Form.fullname)
+
+    await callback.message.answer((
         "Укажите ваше ФИО __*кириллицей*__ через пробел\n\nПример: *Иванов Иван Иванович*\n\n"
         "При отсутствии отчества укажите только фамилию и имя, в этом же формате"
     ),
@@ -77,8 +122,10 @@ async def process_fullname(msg: Message, state: FSMContext):
     state_data = await state.get_data()
 
     one_time_code = state_data.get("one_time_code")
-    if not code_is_valid(one_time_code):
-        await msg.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await msg.answer(error_message_opt)
         await state.set_state(None)
         return
 
@@ -110,8 +157,9 @@ async def process_birth_date(msg: Message, state: FSMContext):
     state_data = await state.get_data()
 
     one_time_code = state_data.get("one_time_code")
-    if not code_is_valid(one_time_code):
-        await msg.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await msg.answer(error_message_opt)
         await state.set_state(None)
         return
 
@@ -151,8 +199,9 @@ async def edit_fullname(msg: Message, state: FSMContext):
     state_data = await state.get_data()
 
     one_time_code = state_data.get("one_time_code")
-    if not code_is_valid(one_time_code):
-        await msg.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await msg.answer(error_message_opt)
         await state.set_state(None)
         return
 
@@ -193,8 +242,9 @@ async def edit_birth_date(msg: Message, state: FSMContext):
     state_data = await state.get_data()
 
     one_time_code = state_data.get("one_time_code")
-    if not code_is_valid(one_time_code):
-        await msg.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await msg.answer(error_message_opt)
         await state.set_state(None)
         return
 
@@ -225,8 +275,9 @@ async def process_confirmed_data_callback(callback: CallbackQuery, state: FSMCon
     birth_date = state_data.get("birth_date")
     one_time_code = state_data.get("one_time_code")
 
-    if not code_is_valid(one_time_code):
-        await callback.message.answer("Время регистрации истекло. Запросите новый код и запустите регистрацию сначала")
+    error_message_opt = code_is_valid(one_time_code)
+    if error_message_opt is not None:
+        await callback.message.answer(error_message_opt)
         return
 
     async with async_session_local() as session:
@@ -248,6 +299,8 @@ async def process_confirmed_data_callback(callback: CallbackQuery, state: FSMCon
 
     await callback.message.answer("Вы успешно зарегистрированы. Доступ к использованию открыт")
     await callback.answer()
+
+    await state.clear()
 
 
 async def _confirm_data(fullname: str, birth_date: str, msg: Message, state: FSMContext):

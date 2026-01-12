@@ -1,6 +1,5 @@
 import re
 
-# TODO: написать тесты
 
 def valid_fullname(fullname: str) -> bool:
     # 2 и более слов, только буквы (латиница + кириллица), разделенные пробелом
